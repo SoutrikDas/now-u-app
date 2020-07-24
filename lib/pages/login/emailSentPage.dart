@@ -52,6 +52,7 @@ class _EmailSentPageState extends State<EmailSentPage>
       //    widget.model.login(email, link.queryParameters['token']);
       //  });
       //});
+
       FirebaseDynamicLinks.instance.onLink(
           onSuccess: (PendingDynamicLinkData dynamicLink) async {
         print("Have dynamic link");
@@ -75,6 +76,28 @@ class _EmailSentPageState extends State<EmailSentPage>
       }, onError: (OnLinkErrorException e) async {
         print('onLinkError');
         print(e.message);
+      });
+
+      // Here is we call get initial link and the app is opened with
+      // com.nowu.app://google/link?deep_link_id=https%3A%2F%2Fnow-u.com%2FloginMobile%3Ftoken%3D47a22d45eaa5b3090d2f1a0c2aa44a96ccb6fa49430f514ee34fac5ee5334cc36b581c301f9b1d19&lt=DDL_LONG&lid=temp_link_id&utm_medium=dynamic_link&utm_source=firebase
+      // we can get the token
+      FirebaseDynamicLinks.instance.getInitialLink().then((value) {
+        final Uri deepLink = value.link;
+        print('deepLink: $deepLink');
+        print('deepLink.path: ${deepLink.path}');
+        print('token parameter: ${deepLink.queryParameters['token']}');
+        print('deepLink.query: ${deepLink.query}');
+        print('deepLink.pathSegments: ${deepLink.pathSegments}');
+        print('deepLink.queryParametersAll: ${deepLink.queryParametersAll}');
+
+        if (deepLink != null && deepLink.path == "/loginMobile") {
+          print(deepLink.queryParameters['token']);
+          widget.args.model.repository.getEmail().then((email) {
+            print("Stored email is");
+            print(email);
+            widget.args.model.login(email, deepLink.queryParameters['token']);
+          });
+        }
       });
     }
   }
@@ -124,7 +147,8 @@ class _EmailSentPageState extends State<EmailSentPage>
                       mainAxisSize: MainAxisSize.max,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        CustomTextButton("I did not recieve an email", onClick: () {
+                        CustomTextButton("I did not recieve an email",
+                            onClick: () {
                           Navigator.of(context).pushNamed(Routes.loginIssues);
                         }),
                       ]),
